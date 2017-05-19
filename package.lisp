@@ -1,7 +1,10 @@
 (defpackage :ether
-  (:use :cl :alexandria)
+  (:use :cl :alexandria :cl-actors)
   (:import-from :fset
-		:@ :lookup :$))
+		:@ :lookup :$)
+  (:import-from :annot.class
+		:export-class)
+  (:export :export-class))
 
 (defpackage :ether-io
-  (:use :cl))
+  (:use :cl :cl-ppcre))
