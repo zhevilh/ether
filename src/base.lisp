@@ -48,11 +48,6 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
   `(tg:finalize ,object (lambda () ,@finalize-body)))
 
 @export
-(defun array (&rest elements)
-  "elements rest -> elements array"
-  (make-array (length elements) :initial-contents elements))
-
-@export
 (defun maptree (fn tree)
   "Same as mapcar, but works on a single tree structure."
   (when tree
@@ -72,3 +67,23 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
 		       (car threaded-functions))
 	     ,@(cdr threaded-functions)))
       start-value))
+
+(defun count-lambda-dynamic-params (expr)
+  (let (params)
+    (dolist (leaf (flatten expr))
+      (when (and (symbolp leaf) (eq 0 (search "%" (string leaf)))) 
+	(push leaf params)))
+    (length (remove-duplicates params))))
+
+@export
+(defmacro build-lambda (&body expr)
+  (let ((expr (maptree (lambda (leaf)
+			 (if (and (symbolp leaf)
+				  (eq 0 (search "%" (string leaf))))
+			     (if (string= (string leaf) "%")
+				 '%1 (intern (string leaf) :ether))
+			     leaf))
+		       expr)))
+    `(lambda (,.(loop for i from 1 to (count-lambda-dynamic-params expr)
+		   collect (intern (format nil "%~a" i) :ether)))
+       ,@expr)))

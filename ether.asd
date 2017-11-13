@@ -8,11 +8,14 @@
 	       (:file "base")
 	       (:file "io")
 	       (:file "classes")
-	       (:file "threading"))
+	       (:file "threading")
+	       (:file "statistics")
+	       (:file "immutables"))
   :depends-on (:fset
 	       :alexandria
 	       :cl-fad
 	       :cl-ppcre
 	       :trivial-garbage
 	       :cl-annot
-	       :cl-actors))
+	       :cl-actors
+	       :cl-json))
