@@ -24,8 +24,9 @@
 			  #:some #:every #:notany #:notevery)
   (:export :shadow-import-fset
 	   :defmap
+	   :emptymap
+	   :newmap
+	   :map-assoc
+	   :with-values
+	   :mapcar-value
 	   :@))
-
-(defpackage :ether-immutables-json
-  (:use :cl :ether-immutables :fset :cl-json)
-  #.(ether-immutables:shadow-import-fset))

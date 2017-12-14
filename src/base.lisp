@@ -87,3 +87,18 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
     `(lambda (,.(loop for i from 1 to (count-lambda-dynamic-params expr)
 		   collect (intern (format nil "%~a" i) :ether)))
        ,@expr)))
+
+(defun package-functions (package)
+  (let (r
+	(package (find-package package)))
+    (do-all-symbols (s)
+      (when (and (eql (symbol-package s) package)
+		 (fboundp s)
+		 (not (macro-function s))
+		 (not (special-operator-p s)))
+	(push s r)))
+    r))
+
+@export
+(defun take (seq count)
+  (subseq seq 0 (min count (length seq))))
