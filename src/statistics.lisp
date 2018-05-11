@@ -61,15 +61,3 @@
 @export
 (defmacro plot-discrete-expr ((&key sort-f n) &body expr)
   `(plot-discrete-function (lambda () ,@expr) ,sort-f ,n))
-
-@export
-(defun gaussian-function (a b c x)
-  (* a (exp (- (/ (expt (- x b) 2)
-		  (* 2 (expt c 2)))))))
-
-@export
-(defun gaussian-random-custom (mean standard-deviation &optional min max)
-  (+ mean
-     (* standard-deviation
-	(gaussian-random (when min (/ (- min mean) standard-deviation))
-			 (when max (/ (- max mean) standard-deviation))))))

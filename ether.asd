@@ -6,6 +6,7 @@
   :pathname "src"
   :components ((:file "../package")
 	       (:file "base")
+	       (:file "random")
 	       (:file "io")
 	       (:file "classes")
 	       (:file "threading")
@@ -18,4 +19,5 @@
 	       :trivial-garbage
 	       :cl-annot
 	       :cl-actors
-	       :cl-json))
+	       :cl-json
+	       :lisp-unit))

@@ -4,6 +4,7 @@
 		:@ :lookup :$)
   (:import-from :annot.class
 		:export-class)
+  (:import-from :lisp-unit :define-test :run-tests)
   (:export :export-class))
 
 (defpackage :ether-io
@@ -24,7 +25,7 @@
 			  #:some #:every #:notany #:notevery)
   (:export :shadow-import-fset
 	   :defmap
-	   :emptymap
+	   :empty-map
 	   :newmap
 	   :map-assoc
 	   :with-values

@@ -1,7 +1,7 @@
 (in-package :ether)
 (annot:enable-annot-syntax)
 
-(defmacro defclass% (class-name superclasses slots &key (mutable? nil))
+(defmacro defclass% (class-name superclasses slots &key mutable? legacy?)
   `(defclass ,class-name ,superclasses
      ,(loop for slot in slots
 	 collect (let ((slot-name (if (listp slot)
@@ -13,7 +13,15 @@
 		   `(,slot-name
 		     :initform ,init-form
 		     :initarg ,(make-keyword (string slot-name))
-		     ,(if mutable? :accessor :reader) ,slot-name)))))
+		     ,(if mutable? :accessor :reader)
+		     ,(if legacy?
+			  slot-name
+			  (intern
+			   (concatenate
+			    'string
+			    (string class-name)
+			    "-"
+			    (string slot-name)))))))))
 
 @export
 (defun clone (object)
@@ -22,14 +30,25 @@
 
 @export
 (defmacro defclassi (class-name superclasses &rest slots)
-  "Alternate syntax for defining mutable classes."
+  "Alternate syntax for defining mutable classes.
+(Legacy, use define-class now.)"
   `(progn
-     (defclass% ,class-name ,superclasses ,slots)))
+     (defclass% ,class-name ,superclasses ,slots :legacy? t)))
 
 @export
 (defmacro defclassm (class-name superclasses &rest slots)
-  "Alternate syntax for defining mutable classes."
-  `(defclass% ,class-name ,superclasses ,slots :mutable? t))
+  "Alternate syntax for defining mutable classes.
+(Legacy, use define-class now."
+  `(defclass% ,class-name ,superclasses ,slots :mutable? t :legacy? t))
+
+@export
+(defmacro define-class (class-name (&key superclasses
+					 mutable?)
+			&rest slots)
+  "Alternate syntax for defining classes."
+  `(progn
+     (defclass% ,class-name ,superclasses ,slots
+       :mutable? ,mutable?)))
 
 (defun %-symbol? (expr)
   (and (symbolp expr)
@@ -58,3 +77,15 @@ The instance's class must implement the clone generic method."
   `(with-new ,(mapcar #'car copy-slots) ,instance
      ,.(loop for copy-slot in copy-slots
 	  collect `(setf ,(car copy-slot) ,(cadr copy-slot)))))
+
+@export
+(defmacro map-with-new (slots instances &body body)
+  `(mapcar (lambda (i) (with-new ,slots i ,@body)) ,instances))
+
+(defmacro update% (instance new? args)
+  (-> (plist-alist args)
+      `(,(if new? 'with-new 'with-slots)
+        ,(mapcar (lambda (arg) (car arg)) %) ,instance
+         ,.(mapcar (lambda (arg)
+                     `(setf ,(car arg) ,(cdr arg)))
+                   %))))

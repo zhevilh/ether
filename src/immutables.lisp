@@ -13,7 +13,7 @@
 				     (eq '&rest %)))
 			       properties)))))
 
-(defvar empty-map (map))
+(defconstant empty-map (map))
 
 (defmacro newmap (key value &rest kvs)
   `(map (,key ,value)
@@ -26,7 +26,7 @@
 
 (defun build-nested-lookup (base-map keys)
   (if keys
-      `(@ ,(build-nested-lookup base-map (cdr keys)) ,(car keys))
+      `(lookup ,(build-nested-lookup base-map (cdr keys)) ,(car keys))
       base-map))
 
 (defmacro with-values ((&rest value-entries) map &body body)
@@ -42,3 +42,8 @@
 (defmacro mapcar-value (maps &rest keys)
   `(mapcar (build-lambda ,(build-nested-lookup '% (reverse keys)))
 	   ,maps))
+
+(defmacro @ (map &rest keys)
+    "Redefined @ macro from fset because it is incomplete and error-prone.
+This one doesn't try to act like funcall, but can access nested maps."
+  (build-nested-lookup map (reverse keys)))
