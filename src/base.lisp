@@ -116,6 +116,12 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
   (apply #'concatenate 'list (make-list n :initial-element values)))
 
 @export
+(defmacro init (n &body init-form)
+  (with-gensyms (i)
+    `(loop for ,i from 1 to ,n
+           collect (progn ,@init-form))))
+
+@export
 (defun cycle (n list)
   (if (< n 0)
       (loop
@@ -129,6 +135,10 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
 @export
 (defun abs- (value1 value2)
   (abs (- value1 value2)))
+
+@export
+(defmacro clamp! (number min max)
+  `(setf ,number (clamp ,number ,min ,max)))
 
 @export
 (defun snap (points value &optional floor)
@@ -148,9 +158,35 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
     (and (>= number min)
 	 (<= number max))))
 
+(defmacro case-between% (key allow-otherwise? on-error forms)
+  (once-only (key)
+    `(cond
+       ,.(append (mapcar (lambda (form)
+                           (if (and allow-otherwise? (eq (car form) 'otherwise))
+                               `(t ,.(cdr form))
+                               `((between ,key ,(caar form) ,(cadar form))
+                                 ,.(cdr form))))
+                         forms)
+                 `((t ,on-error))))))
+
+@export
+(defmacro case-between (key &body forms)
+  `(case-between% ,key t nil ,forms))
+
+@export
+(defmacro ecase-between (key &body forms)
+  `(case-between% ,key nil (error "No matching type in ecase-between.") ,forms))
+
 @export
 (defmacro trace-break (&rest form)
   (with-gensyms ((return-value "RETURN-VALUE"))
     `(let ((,return-value ,@form))
        (break "Breaking on ~a" ',@form)
        ,return-value)))
+
+@export
+(defmacro defun! (spec (binding-arg &rest args) &body body)
+  `(progn
+     (defun ,spec (,binding-arg ,@args) ,@body)
+     (defmacro ,(intern (format nil "~a!" (string spec))) (,binding-arg ,@args)
+       `(setf ,,binding-arg (,',spec ,,binding-arg ,,@args)))))

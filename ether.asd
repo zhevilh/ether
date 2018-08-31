@@ -11,7 +11,8 @@
 	       (:file "classes")
 	       (:file "threading")
 	       (:file "statistics")
-	       (:file "immutables"))
+	       (:file "immutables")
+               (:file "time"))
   :depends-on (:fset
 	       :alexandria
 	       :cl-fad

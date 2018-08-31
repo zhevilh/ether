@@ -69,8 +69,8 @@ The instance's class must implement the clone generic method."
   (let ((instance-sym (gensym)))
     `(let ((,instance-sym (clone ,instance)))
        (with-slots ,slots ,instance-sym
-	 ,@body
-	 ,instance-sym))))
+         ,@body
+         ,instance-sym))))
 
 @export
 (defmacro make-new (instance &rest copy-slots)
@@ -89,3 +89,13 @@ The instance's class must implement the clone generic method."
          ,.(mapcar (lambda (arg)
                      `(setf ,(car arg) ,(cdr arg)))
                    %))))
+
+(defmacro build-nested-access (base-instance properties)
+  (if properties
+      `(with-slots (,(car properties)) ,base-instance
+         (build-nested-access ,(car properties) ,(cdr properties)))
+      base-instance))
+
+@export
+(defmacro .-> (base-instance &rest properties)
+  `(build-nested-access ,base-instance ,properties))
