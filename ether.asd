@@ -11,10 +11,9 @@
 	       (:file "classes")
 	       (:file "threading")
 	       (:file "statistics")
-	       (:file "immutables")
-               (:file "time"))
-  :depends-on (:fset
-	       :alexandria
+               (:file "time")
+               (:file "ether2"))
+  :depends-on (:alexandria
 	       :cl-fad
 	       :cl-ppcre
 	       :trivial-garbage
