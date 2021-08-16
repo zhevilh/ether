@@ -80,3 +80,14 @@
   `(defclass ,class-name ,superclasses
      ,(mapcar (curry #'build-slot readers writers accessors initargs) slots)
      ,@class-options))
+
+(defmacro trace-break (&rest form)
+  (with-gensyms ((return-value "RETURN-VALUE"))
+    `(let ((,return-value ,@form))
+       (break "Breaking on ~a" ',@form)
+       ,return-value)))
+
+(defun take (seq count)
+  (subseq seq 0 (min count (length seq))))
+
+(setf (fdefinition 'between) #'ether:between)

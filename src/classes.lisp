@@ -42,11 +42,29 @@
   `(defclass% ,class-name ,superclasses ,slots :mutable? t :legacy? t))
 
 @export
-(defmacro define-class (class-name (&key superclasses
-					 mutable?)
+(defmacro define-constructor (function-name class-name parameters)
+  `(defun ,function-name ,parameters
+     (make-instance ',class-name
+                    ,.(flatten
+                       (mapcar (lambda (p)
+                                 (let ((param-name (if (listp p) (car p) p)))
+                                   (list (make-keyword param-name) param-name)))
+                               (remove-if (lambda (p)
+                                            (or (eq '&optional p)
+                                                (eq '&key p)
+                                                (eq '&rest p)))
+                                          parameters))))))
+
+@export
+(defmacro define-class (class-name (&key
+                                      superclasses
+                                      mutable?
+                                      (constructor 0 constructor?))
 			&rest slots)
   "Alternate syntax for defining classes."
   `(progn
+     ,(when constructor?
+        `(define-constructor ,class-name ,class-name ,constructor))
      (defclass% ,class-name ,superclasses ,slots
        :mutable? ,mutable?)))
 
@@ -92,10 +110,60 @@ The instance's class must implement the clone generic method."
 
 (defmacro build-nested-access (base-instance properties)
   (if properties
-      `(with-slots (,(car properties)) ,base-instance
-         (build-nested-access ,(car properties) ,(cdr properties)))
+      `(build-nested-access (slot-value ,base-instance ',(car properties))
+                            ,(cdr properties))
       base-instance))
 
 @export
 (defmacro .-> (base-instance &rest properties)
   `(build-nested-access ,base-instance ,properties))
+
+@export
+(defmacro define-equal-function (function-name
+                                 test
+                                 &rest accessors)
+  `(defun ,function-name (o1 o2)
+     (and ,.(loop for accessor in accessors
+                  collect `(funcall ,test
+                                    (slot-value o1 ',accessor)
+                                    (slot-value o2 ',accessor))))))
+
+(defun make-let-slot-values (string)
+  (-> (search "." string :from-end t)
+      (if %
+          `(slot-value ,(make-let-slot-values (subseq string 0 %))
+                       ',(intern (subseq string (1+ %))))
+          (intern string))))
+
+(defmacro single-let-slots (instance-sym-and-form &body body)
+  (let* ((instance-sym (car (ensure-list instance-sym-and-form)))
+         (instance-form (if (listp instance-sym-and-form)
+                            (cadr instance-sym-and-form)
+                            instance-sym-and-form))
+         (prefix (format nil "~a." (string instance-sym)))
+         (prefix-length (length prefix)))
+    `(let ((,instance-sym ,instance-form))
+       ,.(maptree (lambda (symbol)
+                    (let ((string (if (symbolp symbol) (string symbol) "")))
+                      (if (and (> (length string) prefix-length)
+                               (string= prefix (subseq string 0 prefix-length)))
+                          (make-let-slot-values string)
+                          symbol)))
+                  body))))
+
+@export
+(defmacro let-slots ((&rest bindings) &body body)
+  (if bindings
+      `(single-let-slots ,(car bindings)
+         (let-slots ,(cdr bindings) ,@body))
+      `(progn ,@body)))
+
+@export
+(defmacro let-new-slots (instance-sym-and-form &body body)
+  (let* ((instance-sym (car (ensure-list instance-sym-and-form)))
+         (instance-form (if (listp instance-sym-and-form)
+                            (cadr instance-sym-and-form)
+                            instance-sym-and-form)))
+    `(single-let-slots (,instance-sym (clone ,instance-form))
+       ,@body
+       ,instance-sym)))

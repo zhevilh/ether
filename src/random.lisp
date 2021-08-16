@@ -12,11 +12,20 @@
 (define-test flip
   (flip))
 
-@export
+(export '(shuffle shuffle!))
 (defun! shuffle (seq)
   (-> (mapcar (lambda (e) (cons e (random 1.0))) seq)
       (sort (copy-seq %) #'> :key #'cdr)
       (mapcar #'car %)))
+
+@export
+(defun weighted-shuffle (weighted-seq)
+  (labels ((recur (acc rest)
+             (if rest
+                 (let ((pick (decide% rest)))
+                   (recur (cons pick acc) (remove pick rest :key #'car)))
+                 acc)))
+    (nreverse (recur nil weighted-seq))))
 
 (define-test shuffle
   (shuffle '(1 2 3)))
@@ -57,15 +66,17 @@
 @export
 (defun decide% (possibilities)
   (when possibilities
-    (let* ((possibilities (mapcar (lambda (x) (cons (car x) (max 0 (float (cadr x)))))
+    (let* ((possibilities (mapcar (lambda (x)
+                                    (cons (car x) (max 0 (float (cadr x)))))
                                   possibilities))
 	   (total-weight (-> (mapcar #'cdr possibilities)
-			     (reduce #'+ %)))
-	   (r (random total-weight)))
-      (loop for p in possibilities
-            do (decf r (cdr p))
-            when (< r 0)
-              return (car p)))))
+			     (reduce #'+ %))))
+      (if (> total-weight 0)
+          (let ((r (random total-weight)))
+            (loop for p in possibilities
+                  do (decf r (cdr p))
+                  when (< r 0)
+                    return (car p)))))))
 
 @export
 (defmacro decide (&rest possibilities)
@@ -73,6 +84,12 @@
                                        (destructuring-bind (key value) x
                                          `(list (lambda () ,key) ,value)))
                                      possibilities)))))
+
+@export
+(defmacro decide-square (&rest possibilities)
+  `(funcall
+    (decide% (list ,.(loop for (key value) in possibilities
+                           collect `(list (lambda () ,key) (expt ,value 2)))))))
 
 @export
 (defun decide-t (t-weight nil-weight)
