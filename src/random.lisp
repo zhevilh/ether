@@ -6,14 +6,14 @@
   (setf *random-state* (make-random-state t)))
 
 @export
-(defun flip ()
-  (= (random 2) 0))
+(defun flip (&optional (p 1/2))
+  (< (random 1.0) p))
 
 (define-test flip
   (flip))
 
-(export '(shuffle shuffle!))
-(defun! shuffle (seq)
+@export
+(defun shuffle (seq)
   (-> (mapcar (lambda (e) (cons e (random 1.0))) seq)
       (sort (copy-seq %) #'> :key #'cdr)
       (mapcar #'car %)))
@@ -31,8 +31,10 @@
   (shuffle '(1 2 3)))
 
 @export
-(defun pick (seq)
-  (car (shuffle seq)))
+(defun pick (seq &key filter)
+  (car (shuffle (if filter
+                    (remove-if-not filter seq)
+                    seq))))
 
 @export
 (defun pick-many (n seq)

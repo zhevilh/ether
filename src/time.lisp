@@ -20,25 +20,25 @@
                       (* start-at internal-time-units-per-second)))))
 
 @export
-(defun! start-timer (timer)
+(defun start-timer (timer)
   (with-new (start-time) timer
     (setf start-time (get-internal-real-time))))
 
 @export
-(defun! pause-timer (timer)
+(defun pause-timer (timer)
   (with-new (freeze-time) timer
     (if (not freeze-time)
         (setf freeze-time (get-internal-real-time)))))
 
 @export
-(defun! resume-timer (timer)
+(defun resume-timer (timer)
   (with-new (start-time freeze-time) timer
     (when freeze-time
       (incf start-time (- (get-internal-real-time) freeze-time))
       (setf freeze-time nil))))
 
 @export
-(defun! push-timer (timer time)
+(defun push-timer (timer time)
   (with-new (start-time) timer
     (decf start-time (* time internal-time-units-per-second))))
 

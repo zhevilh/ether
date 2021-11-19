@@ -6,6 +6,7 @@
   :pathname "src"
   :components ((:file "../package")
 	       (:file "base")
+               (:file "data")
 	       (:file "random")
 	       (:file "io")
 	       (:file "classes")

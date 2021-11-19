@@ -108,15 +108,15 @@ The instance's class must implement the clone generic method."
                      `(setf ,(car arg) ,(cdr arg)))
                    %))))
 
-(defmacro build-nested-access (base-instance properties)
+(defmacro build-nested-slot-value (base-instance properties)
   (if properties
-      `(build-nested-access (slot-value ,base-instance ',(car properties))
-                            ,(cdr properties))
+      `(build-nested-slot-value (slot-value ,base-instance ',(car properties))
+                                ,(cdr properties))
       base-instance))
 
 @export
 (defmacro .-> (base-instance &rest properties)
-  `(build-nested-access ,base-instance ,properties))
+  `(build-nested-slot-value ,base-instance ,properties))
 
 @export
 (defmacro define-equal-function (function-name
@@ -167,3 +167,20 @@ The instance's class must implement the clone generic method."
     `(single-let-slots (,instance-sym (clone ,instance-form))
        ,@body
        ,instance-sym)))
+
+@export
+(defmacro with-access (slot-entries instance-form &body body)
+  `(with-accessors ,(loop for e in slot-entries
+                          collect (if (listp e) e (list e e)))
+     ,instance-form
+     ,@body))
+
+(defmacro build-nested-access (base-instance properties)
+  (if properties
+      `(build-nested-access (,(car properties) ,base-instance)
+                            ,(cdr properties))
+      base-instance))
+
+@export
+(defmacro access-> (base-instance &rest properties)
+  `(build-nested-access ,base-instance ,properties))

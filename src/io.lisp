@@ -31,10 +31,8 @@
                                           :file-type file-type
                                           :recursive? t)))
                        ((or (not file-types)
-                            (some (lambda (file-type)
-                                    (scan (format nil "\\.~a$" file-type)
-                                          (file-namestring entry)))
-                                  file-types))
+                            (find (pathname-type entry) file-types
+                                  :test #'string-equal))
                         (list entry))))))
 
 @export
@@ -45,3 +43,7 @@
         collect part1 into parts
         finally (return
                   (format nil "~a:/~{~a/~}" (pathname-device directory1) parts))))
+
+@export
+(defun namestring= (string1 string2)
+  (string= (namestring string1) (namestring string2)))

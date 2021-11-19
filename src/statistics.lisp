@@ -43,8 +43,7 @@
                  :sort-f sort-f :print-f print-f))
 
 @export
-(defun plot-discrete (values &key sort-f print-f (stream t)
-                               count?)
+(defun plot-discrete (values &key sort-f print-f (stream t) count?)
   (let ((n (length values))
         graph)
     (dolist (v values)

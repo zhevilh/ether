@@ -90,6 +90,12 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
 (defmacro when-> (start-value &rest threaded-functions)
   (make-arrow 'when-> 'when-let start-value threaded-functions))
 
+@export
+(defmacro getf-> (place &rest keys)
+  (if keys
+      `(getf-> (getf ,place ,(car keys)) ,@(cdr keys))
+      place))
+
 (defun count-lambda-dynamic-params (expr)
   (let (params)
     (dolist (leaf (flatten expr))
@@ -162,7 +168,7 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
 @export
 (defun powerset (list &optional (n (length list)))
   (if list
-      (mapcan (lambda (x) (if (< (length x) n)
+      (mapcan (lambda (x) (if (or (< (length x) n))
                               (list (cons (car list) x) x)
                               (list x)))
               (powerset (cdr list) n))
@@ -213,6 +219,13 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
   (abs (- value1 value2)))
 
 @export
+(defun polynomial (&rest coefficients)
+  (lambda (x)
+    (loop for c in (reverse coefficients)
+          sum (* c (expt x i))
+          sum 1 into i)))
+
+@export
 (defmacro clamp! (number min max)
   `(setf ,number (clamp ,number ,min ,max)))
 
@@ -261,13 +274,6 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
        ,return-value)))
 
 @export
-(defmacro defun! (spec (binding-arg &rest args) &body body)
-  `(progn
-     (defun ,spec (,binding-arg ,@args) ,@body)
-     (defmacro ,(intern (format nil "~a!" (string spec))) (,binding-arg ,@args)
-       `(setf ,,binding-arg (,',spec ,,binding-arg ,,@args)))))
-
-@export
 (defun group-by (list key &key (test #'eq))
   (loop with groups
         for el in list
@@ -287,22 +293,26 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
         collect (mapcar #'cdr g)))
 
 @export
+(defmacro in-place ((function target &rest args))
+  `(setf ,target (,function ,target ,@args)))
+
+@export
 (defun list-not-nil (&rest args)
   (remove nil args))
 
 @export
-(defun! list-insert (list index value)
+(defun list-insert (list index value)
   (append (subseq list 0 index)
           (list value)
           (subseq list index)))
 
 @export
-(defun! list-remove (list index)
+(defun list-remove (list index)
   (append (subseq list 0 index)
           (subseq list (1+ index))))
 
 @export
-(defun! list-replace (list index value)
+(defun list-replace (list index value)
   (append (subseq list 0 index)
           (list value)
           (subseq list (1+ index))))
@@ -319,3 +329,7 @@ Usage: (let-protect ((symbol1 init-form1 unwind-form1)
 @export
 (defun ^ (base &rest exponents)
   (reduce #'expt exponents :initial-value base))
+
+@export
+(defmacro remove! (item sequence &rest key-args)
+  `(setf ,sequence (remove ,item ,sequence ,@key-args)))
